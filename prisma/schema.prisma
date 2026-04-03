@@ -9,7 +9,8 @@ datasource db {
 }
 
 enum Role {
-  USER
+  VIEWER
+  ANALYST
   ADMIN
 }
 
