@@ -3,10 +3,10 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const prisma = require("./src/prisma/prisma");
+const prisma = require("./src/prisma/prismaClient");
 const authenticateMiddleware = require("./src/middleware/authMiddleware");
 const authRoutes = require("./src/modules/auth/authRoute");
-
+const recordRoutes = require("./src/modules/record/recordRoutes");
 const PORT = process.env.PORT || 3000;
 
 // middleware
@@ -16,6 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // routes
 app.use("/api/auth", authRoutes);
+app.use("/api/records", recordRoutes);
 
 // check database connection before starting the server
 async function testDatabaseConnection() {

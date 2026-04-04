@@ -1,5 +1,5 @@
-// auth.service.js
-const prisma = require("../../prisma/prisma");
+// authController.js
+const prisma = require("../../prisma/prismaClient");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const {
@@ -7,6 +7,7 @@ const {
   userLoginSchema,
 } = require("../../schemaValidation/userSchema");
 
+// register user function
 const register = async (req, res) => {
   // validate input first
   const { name, email, password } = req.body;
@@ -52,6 +53,8 @@ const register = async (req, res) => {
     },
   });
 };
+
+// Login user function
 
 const login = async (req, res) => {
   const { email, password } = req.body;

@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const prisma = require("../prisma/prisma");
+const prisma = require("../prisma/prismaClient");
 
 const authenticateMiddleware = async (req, res, next) => {
   try {
