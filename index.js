@@ -1,10 +1,21 @@
 require("dotenv").config();
 
 const express = require("express");
+const cors = require("cors");
 const app = express();
-const prisma = require("./src/lib/prisma");
+const prisma = require("./src/prisma/prisma");
+const authenticateMiddleware = require("./src/middleware/authMiddleware");
+const authRoutes = require("./src/modules/auth/authRoute");
 
 const PORT = process.env.PORT || 3000;
+
+// middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// routes
+app.use("/api/auth", authRoutes);
 
 // check database connection before starting the server
 async function testDatabaseConnection() {
@@ -19,33 +30,15 @@ async function testDatabaseConnection() {
 // home route
 app.get("/", async (req, res) => {
   try {
-    const user = await prisma.user.findMany();
     res.status(200).json({
-      data: user,
-      response: "Data fetched successfully from the database",
+      message: "Message from backend",
+      success: true,
     });
   } catch (error) {
-    res.status(400).json({ message: error });
+    res.status(400).json({ message: error, success: false });
   }
 });
 
-// sample user input
-async function createSampleUser() {
-  try {
-    const user = await prisma.user.create({
-      data: {
-        name: "Arjun",
-        email: "arjung352@gmail.com",
-        passwordHash: "password",
-        role: "ADMIN",
-        status: "ACTIVE",
-      },
-    });
-    console.log(user);
-  } catch (error) {
-    console.log(error);
-  }
-}
 // server start function
 async function startServer() {
   try {
@@ -59,5 +52,13 @@ async function startServer() {
     process.exit(1);
   }
 }
+// error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || "Internal server error",
+    success: false,
+  });
+});
 
 startServer();

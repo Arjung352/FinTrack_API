@@ -2,7 +2,7 @@ const { z } = require("zod");
 
 const transactionCreateSchema = z.object({
   amount: z.number().positive("Amount must be a positive number"),
-  type: z.enum(["income", "expense", "transfer"]),
+  type: z.enum(["INCOME", "EXPENSE"]),
   category: z.string().min(1, "Category is required"),
   date: z.date(),
   note: z.string().max(500).optional(),
@@ -12,7 +12,7 @@ const transactionCreateSchema = z.object({
 
 const transactionUpdateSchema = z.object({
   amount: z.number().positive().optional(),
-  type: z.enum(["income", "expense", "transfer"]).optional(),
+  type: z.enum(["INCOME", "EXPENSE"]).optional(),
   category: z.string().min(1).optional(),
   date: z.date().optional(),
   note: z.string().max(500).optional(),
