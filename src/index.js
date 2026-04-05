@@ -6,6 +6,7 @@ const app = express();
 const prisma = require("./prisma/prismaClient");
 const authRoutes = require("./modules/auth/authRoute");
 const recordRoutes = require("./modules/record/recordRoutes");
+const userRoutes = require("./modules/user/userRoutes");
 const PORT = process.env.PORT || 3000;
 
 // middleware
@@ -14,8 +15,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // routes
+
 app.use("/api/auth", authRoutes);
 app.use("/api/records", recordRoutes);
+app.use("/api/users", userRoutes);
 
 // check database connection before starting the server
 async function testDatabaseConnection() {
