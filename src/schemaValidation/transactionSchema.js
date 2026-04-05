@@ -4,7 +4,7 @@ const transactionCreateSchema = z.object({
   amount: z.number().positive("Amount must be a positive number"),
   type: z.enum(["INCOME", "EXPENSE"]),
   category: z.string().min(1, "Category is required"),
-  date: z.date(),
+  date: z.coerce.date(),
   note: z.string().max(500).optional(),
   userId: z.string().uuid("Invalid user ID format"),
   isDeleted: z.boolean().default(false),

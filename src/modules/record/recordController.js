@@ -1,38 +1,106 @@
-// record.controller.js
-const recordService = require("./recordService");
+// recordController.js
+const prisma = require("../../prisma/prismaClient");
+const {
+  transactionCreateSchema,
+  transactionUpdateSchema,
+} = require("../../schemaValidation/transactionSchema");
 
-exports.createRecord = async (req, res, next) => {
+// create record function (Admin only)
+const createRecord = async (req, res) => {
   try {
-    const result = await recordService.createRecord(req.body, req.user.id);
-    res.status(201).json(result);
-  } catch (err) {
-    next(err);
+    const data = req.body;
+    const userId = req.user.id;
+    const parsedDataWithSuccess = transactionCreateSchema.safeParse({
+      ...data,
+      userId,
+    });
+    if (!parsedDataWithSuccess.success) {
+      return res
+        .status(400)
+        .json({ message: parsedDataWithSuccess.error.issues[0].message });
+    }
+    const record = await prisma.record.create({
+      data: {
+        ...parsedDataWithSuccess.data,
+        userId,
+      },
+    });
+    res.status(201).json(record);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };
 
-exports.getRecords = async (req, res, next) => {
+// get records function (Admin and Analyst only)
+const getRecords = async (req, res) => {
   try {
-    const result = await recordService.getRecords(req.query, req.user.id);
+    const { type, category, from, to } = req.query;
+    const userId = req.user.id;
+    const filters = {
+      userId,
+      isDeleted: false,
+    };
+
+    if (type) filters.type = type;
+    if (category) filters.category = category;
+
+    if (from || to) {
+      filters.date = {
+        ...(from && { gte: new Date(from) }),
+        ...(to && { lte: new Date(to) }),
+      };
+    }
+
+    const result = await prisma.record.findMany({
+      where: filters,
+      orderBy: { date: "desc" },
+    });
     res.status(200).json(result);
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };
 
-exports.updateRecord = async (req, res, next) => {
+// update record function (Admin only)
+const updateRecord = async (req, res) => {
   try {
-    const result = await recordService.updateRecord(req.params.id, req.body);
+    const { id } = req.params;
+    const data = req.body;
+    const parsedDataWithSuccess = transactionUpdateSchema.safeParse({
+      ...data,
+    });
+    if (!parsedDataWithSuccess.success) {
+      return res
+        .status(400)
+        .json({ message: parsedDataWithSuccess.error.issues[0].message });
+    }
+    const result = await prisma.record.update({
+      where: { id },
+      data: parsedDataWithSuccess.data,
+    });
     res.status(200).json(result);
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };
 
-exports.deleteRecord = async (req, res, next) => {
+// delete record function (Admin only)
+const deleteRecord = async (req, res) => {
   try {
-    const result = await recordService.deleteRecord(req.params.id);
+    const { id } = req.params;
+    const result = await prisma.record.update({
+      where: { id },
+      data: { isDeleted: true }, // soft delete
+    });
     res.status(200).json(result);
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
+};
+
+module.exports = {
+  createRecord,
+  getRecords,
+  updateRecord,
+  deleteRecord,
 };
