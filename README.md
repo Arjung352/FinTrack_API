@@ -195,6 +195,72 @@ Access interactive API docs at `http://localhost:3000/api-docs`. Includes endpoi
 - `npm run prisma:migrate`: Run database migrations.
 - `npm run prisma:studio`: Open Prisma Studio for DB management.
 
+## Directory Structure
+
+```
+└── arjung352-fintrack_api/
+    ├── README.md
+    ├── package.json
+    └── src/
+        ├── index.js
+        ├── swagger.js
+        ├── middleware/
+        │   ├── authMiddleware.js
+        │   ├── rateLimitMiddleware.js
+        │   └── roleMiddleware.js
+        ├── modules/
+        │   ├── auth/
+        │   │   ├── authController.js
+        │   │   └── authRoute.js
+        │   ├── dashboard/
+        │   │   ├── dashboardController.js
+        │   │   └── dashboardRoutes.js
+        │   ├── record/
+        │   │   ├── recordController.js
+        │   │   └── recordRoutes.js
+        │   └── user/
+        │       ├── userController.js
+        │       └── userRoutes.js
+        ├── prisma/
+        │   ├── prismaClient.js
+        │   ├── schema.prisma
+        │   ├── seed.js
+        │   └── migrations/
+        │       ├── migration_lock.toml
+        │       └── 20260405073824_init/
+        │           └── migration.sql
+        └── schemaValidation/
+            ├── transactionSchema.js
+            ├── userAuthSchema.js
+            └── userUpdationValidation.js
+```
+
+### File Descriptions
+
+- **README.md**: This file, containing project documentation and setup instructions.
+- **package.json**: Node.js project configuration with dependencies and scripts.
+- **src/index.js**: Main entry point of the application, sets up the Express server.
+- **src/swagger.js**: Configuration for Swagger UI API documentation.
+- **src/middleware/authMiddleware.js**: Middleware for JWT authentication verification.
+- **src/middleware/rateLimitMiddleware.js**: Middleware for implementing rate limiting.
+- **src/middleware/roleMiddleware.js**: Middleware for role-based access control.
+- **src/modules/auth/authController.js**: Controller handling authentication logic (register, login).
+- **src/modules/auth/authRoute.js**: Routes for authentication endpoints.
+- **src/modules/dashboard/dashboardController.js**: Controller for dashboard-related logic.
+- **src/modules/dashboard/dashboardRoutes.js**: Routes for dashboard endpoints.
+- **src/modules/record/recordController.js**: Controller for financial record operations.
+- **src/modules/record/recordRoutes.js**: Routes for record management endpoints.
+- **src/modules/user/userController.js**: Controller for user management operations.
+- **src/modules/user/userRoutes.js**: Routes for user-related endpoints.
+- **src/prisma/prismaClient.js**: Prisma client instance for database interactions.
+- **src/prisma/schema.prisma**: Prisma schema defining the database models.
+- **src/prisma/seed.js**: Script to seed the database with initial data.
+- **src/prisma/migrations/migration_lock.toml**: Prisma migration lock file.
+- **src/prisma/migrations/20260405073824_init/migration.sql**: Initial database migration SQL.
+- **src/schemaValidation/transactionSchema.js**: Zod schema for transaction validation.
+- **src/schemaValidation/userAuthSchema.js**: Zod schema for user validation.
+- **src/schemaValidation/userUpdationValidation.js**: Additional user validation logic.
+
 ## Contributing
 
 1. Fork the repo.

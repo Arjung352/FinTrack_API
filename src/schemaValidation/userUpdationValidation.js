@@ -1,4 +1,4 @@
-// userValidation.js
+// userUpdationValidation.js
 const { z } = require("zod");
 
 const updateRoleSchema = z.object({

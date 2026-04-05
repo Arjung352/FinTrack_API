@@ -3,7 +3,7 @@ const prisma = require("../../prisma/prismaClient");
 const {
   updateStatusSchema,
   updateRoleSchema,
-} = require("../../schemaValidation/userValidation");
+} = require("../../schemaValidation/userUpdationValidation");
 
 // get all users ADMIN ONLY
 const getUsers = async (req, res) => {

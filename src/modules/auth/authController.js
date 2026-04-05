@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const {
   userCreateSchema,
   userLoginSchema,
-} = require("../../schemaValidation/userSchema");
+} = require("../../schemaValidation/userAuthSchema");
 
 // register user function
 const register = async (req, res) => {
