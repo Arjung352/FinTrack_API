@@ -14,7 +14,7 @@ const transactionUpdateSchema = z.object({
   amount: z.number().positive().optional(),
   type: z.enum(["INCOME", "EXPENSE"]).optional(),
   category: z.string().min(1).optional(),
-  date: z.date().optional(),
+  date: z.coerce.date().optional(),
   note: z.string().max(500).optional(),
   isDeleted: z.boolean().optional(),
 });

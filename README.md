@@ -1,255 +1,206 @@
-# FinTrack API - Role-Based Access Control System
+# FinTrack API
 
-A Node.js API for financial dashboard with role-based access control (RBAC) using Supabase PostgreSQL.
+A Node.js REST API for financial dashboard management with role-based access control (RBAC). Built with Express.js, Prisma ORM, and Supabase PostgreSQL. Features JWT authentication, schema validation, rate limiting, and comprehensive API documentation via Swagger UI.
 
 ## Features
 
-- **Authentication**: JWT-based authentication with secure password hashing
-- **Role-Based Access Control**: Three roles with granular permissions
-  - **Viewer**: Can only view dashboard data
-  - **Analyst**: Can view records and access insights
-  - **Admin**: Can create, update, and manage records and users
-- **Financial Records Management**: CRUD operations with role-based filtering
-- **User Management**: Admin-only user and role management
-- **Insights**: Financial analytics for analysts and admins
+- **JWT Authentication**: Secure token-based authentication with password hashing (bcryptjs).
+- **Role-Based Access Control (RBAC)**: Three user roles with granular permissions:
+  - **VIEWER**: Access dashboard overview.
+  - **ANALYST**: View financial records and dashboard insights.
+  - **ADMIN**: Full CRUD on records, user management.
+- **Schema Validation**: Input validation using Zod for users and transactions.
+- **Rate Limiting**: Global rate limit of 10 requests per minute per IP to prevent abuse.
+- **Database**: Prisma ORM with Supabase PostgreSQL for data persistence.
+- **API Documentation**: Interactive Swagger UI at `/api-docs` for testing and exploring endpoints.
+- **Middleware**: Authentication, role authorization, CORS, and error handling.
 
 ## Tech Stack
 
 - **Backend**: Node.js, Express.js
-- **Database**: Supabase (PostgreSQL)
+- **Database**: Supabase (PostgreSQL) via Prisma ORM
 - **Authentication**: JWT (jsonwebtoken)
 - **Password Hashing**: bcryptjs
-- **Validation**: Joi
-- **CORS**: Enabled for cross-origin requests
+- **Validation**: Zod
+- **Rate Limiting**: express-rate-limit
+- **CORS**: Enabled
+- **Documentation**: Swagger UI (swagger-ui-express)
 
 ## Setup Instructions
 
-### 1. Environment Setup
+### Prerequisites
 
-1. Clone or navigate to the project directory
-2. Install dependencies:
+- Node.js (v14 or higher)
+- npm or yarn
+- Supabase account and project
 
-   ```bash
-   npm install
-   ```
+### 1. Clone and Install
 
-3. Create a Supabase project at [supabase.com](https://supabase.com)
-
-4. Update `.env` file with your Supabase credentials:
-   ```
-   SUPABASE_URL=your_supabase_project_url
-   SUPABASE_ANON_KEY=your_supabase_anon_key
-   JWT_SECRET=your_jwt_secret_key_here
-   PORT=3000
-   ```
-
-### 2. Database Setup
-
-Create the following tables in your Supabase database:
-
-#### Users Table
-
-```sql
-CREATE TABLE users (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  role_id UUID NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+```bash
+git clone <repository-url>
+cd FinTrack_API
+npm install
 ```
 
-#### Roles Table
+### 2. Environment Configuration
 
-```sql
-CREATE TABLE roles (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name VARCHAR(50) UNIQUE NOT NULL
-);
+Create a `.env` file in the root directory:
 
--- Insert default roles
-INSERT INTO roles (name) VALUES ('viewer'), ('analyst'), ('admin');
+```env
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+JWT_SECRET=your_jwt_secret_key_here
+PORT=3000
 ```
 
-#### Permissions Table
+### 3. Database Setup
 
-```sql
-CREATE TABLE permissions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name VARCHAR(100) UNIQUE NOT NULL
-);
+1. Create a Supabase project at [supabase.com](https://supabase.com).
+2. Run Prisma migrations to set up the database schema:
 
--- Insert default permissions
-INSERT INTO permissions (name) VALUES
-  ('view_records'),
-  ('view_insights'),
-  ('create_records'),
-  ('update_records'),
-  ('delete_records'),
-  ('manage_users');
+```bash
+npm run prisma:migrate
+npm run prisma:generate
 ```
 
-#### Role Permissions Table (Many-to-Many)
+3. (Optional) Seed the database:
 
-```sql
-CREATE TABLE role_permissions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
-  permission_id UUID REFERENCES permissions(id) ON DELETE CASCADE,
-  UNIQUE(role_id, permission_id)
-);
-
--- Assign permissions to roles
--- Viewer: view_records
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r, permissions p
-WHERE r.name = 'viewer' AND p.name = 'view_records';
-
--- Analyst: view_records, view_insights
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r, permissions p
-WHERE r.name = 'analyst' AND p.name IN ('view_records', 'view_insights');
-
--- Admin: all permissions
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id FROM roles r, permissions p
-WHERE r.name = 'admin';
-```
-
-#### Financial Records Table
-
-```sql
-CREATE TABLE financial_records (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  amount DECIMAL(10,2) NOT NULL,
-  description TEXT NOT NULL,
-  category VARCHAR(100) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-```
-
-### 3. Row Level Security (Optional but Recommended)
-
-Enable RLS in Supabase for additional security:
-
-```sql
--- Enable RLS
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE financial_records ENABLE ROW LEVEL SECURITY;
-
--- Users can only see their own data (except admins)
-CREATE POLICY "Users can view own record" ON users
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own record" ON users
-  FOR UPDATE USING (auth.uid() = id);
-
--- Financial records: users can only see their own, admins see all
-CREATE POLICY "Users can view own financial records" ON financial_records
-  FOR SELECT USING (
-    user_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM users u
-      JOIN roles r ON u.role_id = r.id
-      WHERE u.id = auth.uid() AND r.name = 'admin'
-    )
-  );
+```bash
+npm run prisma:seed
 ```
 
 ### 4. Start the Server
 
 ```bash
-# Development mode
+# Development mode (with nodemon)
 npm run dev
 
 # Production mode
 npm start
 ```
 
-The server will start on `http://localhost:3000`
+The server runs on `http://localhost:3000`.
 
 ## API Endpoints
 
+All endpoints return JSON responses with `success` (boolean) and `message` (string) fields. Protected routes require a Bearer token in the `Authorization` header.
+
 ### Authentication
 
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
-- `GET /api/auth/profile` - Get user profile
+- **POST /api/auth/register**
+  - Body: `{ "name": "string", "email": "string", "password": "string" }`
+  - Response: User creation confirmation.
+  - Public endpoint.
 
-### User Management (Admin Only)
-
-- `GET /api/users` - Get all users
-- `GET /api/users/:id` - Get user by ID
-- `PUT /api/users/:id` - Update user
-- `DELETE /api/users/:id` - Delete user
-
-### Role Management (Admin Only)
-
-- `GET /api/roles` - Get all roles
-- `GET /api/roles/:id` - Get role by ID
-- `PUT /api/roles/assign/:userId/:roleId` - Assign role to user
-- `GET /api/roles/permissions/:name` - Get role permissions
+- **POST /api/auth/login**
+  - Body: `{ "email": "string", "password": "string" }`
+  - Response: JWT token and user info.
+  - Public endpoint.
 
 ### Financial Records
 
-- `GET /api/financial-records` - Get records (role-based)
-- `GET /api/financial-records/:id` - Get record by ID
-- `POST /api/financial-records` - Create record
-- `PUT /api/financial-records/:id` - Update record
-- `DELETE /api/financial-records/:id` - Delete record
-- `GET /api/financial-records/insights` - Get insights
+- **GET /api/records** (ANALYST, ADMIN)
+  - Query params: `type` (INCOME/EXPENSE), `category`, `from` (date), `to` (date)
+  - Response: List of records (filtered).
 
-### Health Check
+- **POST /api/records** (ADMIN)
+  - Body: `{ "amount": number, "description": "string", "category": "string" }`
+  - Response: Record creation confirmation.
 
-- `GET /api/health` - Server health status
+- **PATCH /api/records/:id** (ADMIN)
+  - Body: Partial update fields (amount, description, category).
+  - Response: Update confirmation.
 
-## Usage Examples
+- **DELETE /api/records/:id** (ADMIN)
+  - Response: Soft delete confirmation.
 
-### Register a new user
+### User Management (ADMIN only)
 
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password123","role":"viewer"}'
-```
+- **GET /api/users**
+  - Response: List of all users.
 
-### Login
+- **PATCH /api/users/:id/role**
+  - Body: `{ "role": "VIEWER" | "ANALYST" | "ADMIN" }`
+  - Response: Role update confirmation.
 
-```bash
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password123"}'
-```
+- **PATCH /api/users/:id/status**
+  - Body: `{ "status": "ACTIVE" | "INACTIVE" }`
+  - Response: Status update confirmation.
 
-### Create financial record (with JWT token)
+### Dashboard
 
-```bash
-curl -X POST http://localhost:3000/api/financial-records \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{"amount":100.50,"description":"Coffee purchase","category":"Food"}'
-```
+- **GET /api/dashboard/overview** (VIEWER, ANALYST, ADMIN)
+  - Query: `trendType` ("monthly" | "weekly")
+  - Response: Global financial overview with trends.
 
-## Security Features
+- **GET /api/dashboard/summary** (ANALYST, ADMIN)
+  - Response: User-specific financial summary.
 
-- JWT token-based authentication
-- Password hashing with bcrypt
-- Role-based access control with granular permissions
-- Input validation with Joi
-- CORS enabled
-- Row Level Security in database
+### Home
 
-## Development
+- **GET /**
+  - Response: Basic server status.
+  - Public endpoint.
 
-- Use `npm run dev` for development with auto-restart
-- All source code in `src/` directory
-- Environment variables in `.env` file
-- Database models in `src/models/`
-- Controllers in `src/controllers/`
-- Middleware in `src/middleware/`
-- Routes in `src/routes/`
+## Role Permissions
+
+| Endpoint                         | VIEWER | ANALYST | ADMIN |
+| -------------------------------- | ------ | ------- | ----- |
+| /api/auth/\*                     | ✅     | ✅      | ✅    |
+| /api/records (GET)               | ❌     | ✅      | ✅    |
+| /api/records (POST/PATCH/DELETE) | ❌     | ❌      | ✅    |
+| /api/users/\*                    | ❌     | ❌      | ✅    |
+| /api/dashboard/overview          | ✅     | ✅      | ✅    |
+| /api/dashboard/summary           | ❌     | ✅      | ✅    |
+
+## Security & Validation
+
+- **Authentication**: JWT tokens expire in 1 day. Inactive users are blocked.
+- **Authorization**: Role-based middleware enforces permissions.
+- **Validation**: Zod schemas validate all inputs (users: name, email, password; transactions: amount, type, category, etc.).
+- **Rate Limiting**: 10 requests/minute/IP to mitigate abuse.
+- **CORS**: Enabled for cross-origin requests.
+- **Error Handling**: Centralized error middleware with consistent JSON responses.
+
+## API Documentation
+
+Access interactive API docs at `http://localhost:3000/api-docs`. Includes endpoint details, request/response schemas, and a built-in tester.
+
+## Database Schema
+
+### Users Table
+
+- `id` (UUID, PK)
+- `name` (string)
+- `email` (string, unique)
+- `passwordHash` (string)
+- `role` (enum: VIEWER, ANALYST, ADMIN)
+- `status` (enum: ACTIVE, INACTIVE)
+- `createdAt` (timestamp)
+
+### Financial Records Table
+
+- `id` (UUID, PK)
+- `userId` (UUID, FK to users)
+- `amount` (decimal)
+- `description` (text)
+- `category` (string)
+- `createdAt` (timestamp)
+
+## Scripts
+
+- `npm start`: Start production server.
+- `npm run dev`: Start development server with auto-reload.
+- `npm run prisma:generate`: Generate Prisma client.
+- `npm run prisma:migrate`: Run database migrations.
+- `npm run prisma:studio`: Open Prisma Studio for DB management.
+
+## Contributing
+
+1. Fork the repo.
+2. Create a feature branch.
+3. Commit changes.
+4. Push and open a PR.
 
 ## License
 

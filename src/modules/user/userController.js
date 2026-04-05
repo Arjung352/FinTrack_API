@@ -1,4 +1,4 @@
-// user.service.js
+// userController.js
 const prisma = require("../../prisma/prismaClient");
 const {
   updateStatusSchema,

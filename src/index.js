@@ -7,18 +7,30 @@ const prisma = require("./prisma/prismaClient");
 const authRoutes = require("./modules/auth/authRoute");
 const recordRoutes = require("./modules/record/recordRoutes");
 const userRoutes = require("./modules/user/userRoutes");
+const dashboardRoutes = require("./modules/dashboard/dashboardRoutes");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swagger");
 const PORT = process.env.PORT || 3000;
+const rateLimiter = require("./middleware/rateLimitMiddleware");
 
 // middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(rateLimiter);
 
 // routes
-
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/records", recordRoutes);
 app.use("/api/users", userRoutes);
+
+// Swagger UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/api-docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
 
 // check database connection before starting the server
 async function testDatabaseConnection() {
