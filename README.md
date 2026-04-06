@@ -44,18 +44,56 @@ npm install
 
 ### 2. Environment Configuration
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory by copying the provided `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Then update the values in `.env` to match your local setup.
+
+Example `.env` structure:
 
 ```env
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-JWT_SECRET=your_jwt_secret_key_here
+DATABASE_URL="postgresql://postgres:postgres@db:5432/fintrack"
+DIRECT_URL="postgresql://postgres:postgres@db:5432/fintrack"
+JWT_SECRET="Secret_Key_For_JWT"
 PORT=3000
 ```
 
-### 3. Database Setup
+> If you are not using a `db` host alias, replace `db` with the hostname or IP address of your PostgreSQL server.
 
-1. Create a Supabase project at [supabase.com](https://supabase.com).
+### 3. Local Container Run
+
+This project includes a `docker-compose.yml` that builds the API container and loads environment variables from `.env`.
+
+1. Build and start the container:
+
+```bash
+docker compose up --build
+```
+
+2. Visit the API at:
+
+```text
+http://localhost:3000
+```
+
+3. For API docs, open:
+
+```text
+http://localhost:3000/api-docs
+```
+
+4. To stop the container, press `Ctrl+C` in the terminal or run:
+
+```bash
+docker compose down
+```
+
+### 4. Database Setup
+
+1. Create a Supabase project at [supabase.com](https://supabase.com), or use a local PostgreSQL instance.
 2. Run Prisma migrations to set up the database schema:
 
 ```bash
@@ -69,7 +107,9 @@ npm run prisma:generate
 npm run prisma:seed
 ```
 
-### 4. Start the Server
+### 5. Start the Server Locally
+
+If you want to run the app outside Docker, use one of the commands below:
 
 ```bash
 # Development mode (with nodemon)
