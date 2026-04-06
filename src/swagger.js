@@ -7,7 +7,7 @@ const swaggerDocument = {
   },
   servers: [
     {
-      url: "http://localhost:3000",
+      url: "https://fintrack-api-1-i2fi.onrender.com",
       description: "Local server",
     },
   ],
