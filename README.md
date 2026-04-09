@@ -206,6 +206,15 @@ All endpoints return JSON responses with `success` (boolean) and `message` (stri
 
 Access interactive API docs at `http://localhost:3000/api-docs`. Includes endpoint details, request/response schemas, and a built-in tester.
 
+### Using Swagger with Authentication
+
+1. Create an account using `POST /api/auth/register`.
+2. Login using `POST /api/auth/login` and copy the returned JWT token.
+3. Open the Swagger UI and click the `Authorize` button.
+4. Paste the token in the authorization field as `Bearer <token>`.
+5. Click `Authorize` and then `Close`.
+6. You can now call protected endpoints directly from Swagger.
+
 ## Database Schema
 
 ### Users Table
